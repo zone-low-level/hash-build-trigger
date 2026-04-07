@@ -2,7 +2,7 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use walkdir::WalkDir;
 
@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 #[command(
     author,
     version,
-    about = "Hash files in directories (by extension) and rebuild if changed"
+    about = "Watch for changes in your source files and recompile automatically."
 )]
 struct Args {
     /// Directories to scan (can be repeated)
@@ -45,22 +45,21 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    println!("🔄 Source files changed (or first run). Running build...");
+    println!("Source files changed (or first run). Running build...");
 
-    // Run the build command
-    // let status = Command::new("sh")
-    //     .arg("-c")
-    //     .arg(&args.build_cmd)
-    //     .status()
-    //     .context("Failed to execute build command")?;
-
-    let status = Command::new("zig")
-        .arg("build")
+    let status = Command::new("sh")
+        .arg("-c")
+        .arg(&args.build_cmd)
         .status()
-        .context("Failed to execute")?;
-    if !status.success() {
-        anyhow::bail!("Build command failed with exit code: {}", status);
-    }
+        .context("Failed to execute build command")?;
+
+    // let status = Command::new("zig")
+    //     .arg("build")
+    //     .status()
+    //     .context("Failed to execute")?;
+    // if !status.success() {
+    //     anyhow::bail!("Build command failed with exit code: {}", status);
+    // }
 
     // Save the new hash
     fs::write(&args.cache_file, &current_hash).context("Failed to write hash cache file")?;

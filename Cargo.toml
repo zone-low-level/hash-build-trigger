@@ -1,5 +1,6 @@
 [package]
-name = "hash-build-trigger"
+name = "hbd"
+author = "KwachOjunga <ojungakwach@gmail.com>"
 version = "0.1.0"
 edition = "2024"
 
