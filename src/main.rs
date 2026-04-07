@@ -1,3 +1,4 @@
+#![allow(unused)]
 // src/main.rs
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -53,17 +54,8 @@ fn main() -> Result<()> {
         .status()
         .context("Failed to execute build command")?;
 
-    // let status = Command::new("zig")
-    //     .arg("build")
-    //     .status()
-    //     .context("Failed to execute")?;
-    // if !status.success() {
-    //     anyhow::bail!("Build command failed with exit code: {}", status);
-    // }
-
     // Save the new hash
     fs::write(&args.cache_file, &current_hash).context("Failed to write hash cache file")?;
-
     println!("✅ Build completed. New hash cached.");
     Ok(())
 }
