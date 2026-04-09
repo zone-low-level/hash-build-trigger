@@ -4,6 +4,8 @@ use std::time::Duration;
 // src/main.rs
 use anyhow::{Context, Result};
 use clap::Parser;
+use env_logger::Builder;
+use log::{LevelFilter, debug, error, info};
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -42,6 +44,7 @@ struct Args {
 }
 
 fn main() -> Result<()> {
+    Builder::new().filter_level(LevelFilter::max()).init();
     let mut args = Args::parse();
     if &args.build_cmd == &String::from("cargo build")
         || &args.build_cmd == &String::from("cargo b")
@@ -66,14 +69,20 @@ fn main() -> Result<()> {
     let mut previous_hash = fs::read_to_string(&args.cache_file).ok();
     loop {
         previous_hash = fs::read_to_string(&args.cache_file).ok();
-        let current_hash = compute_combined_hash(&args.dirs, &args.extensions)
-            .context("Failed to compute hash of source files")?;
-        if previous_hash.as_deref() == Some(&current_hash) {
-            println!("No changes detected in source files. Skipping build.");
+        let current_hash = compute_combined_hash(&args.dirs, &args.extensions);
+        match &current_hash {
+            Ok(_) => (),
+            Err(_) => error!("Failed to write hash cache file"),
+        }
+
+        let cur_hash = current_hash?;
+        // .context(error!("Failed to compute hash of source files"))?;
+        if previous_hash.as_deref() == Some(&cur_hash) {
+            info!("No changes detected in source files. Skipping build.");
             thread::sleep(TIMEOUT);
             clear_output();
         } else {
-            println!("Running build...");
+            info!("Running build...");
 
             let status = Command::new("sh")
                 .arg("-c")
@@ -81,9 +90,11 @@ fn main() -> Result<()> {
                 .status()
                 .context("Failed to execute build command")?;
 
-            fs::write(&args.cache_file, &current_hash)
-                .context("Failed to write hash cache file")?;
-            println!("🔥 Build completed.");
+            match fs::write(&args.cache_file, &cur_hash) {
+                Ok(()) => (),
+                Err(_) => error!("Failed to write hash cache file"),
+            }
+            info!("  🔥 Build completed.  ");
             clear_output();
             thread::sleep(TIMEOUT);
             // test
